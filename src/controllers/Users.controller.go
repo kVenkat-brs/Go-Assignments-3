@@ -78,24 +78,24 @@ func CreateUser(c fiber.Ctx) error {
 		
 	}
 
+	request.Id = result.InsertedID.(bson.ObjectID)
 
+	// var user models.User
 
-	var user models.User
-
-	if err:=users.FindOne(c.Context(),bson.M{"_id":result.InsertedID}).Decode(&user);err!=nil{
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-		"success": false,
-		"message":"No user exixts",
-		"error":err,
+	// if err:=users.FindOne(c.Context(),bson.M{"_id":result.InsertedID}).Decode(&user);err!=nil{
+	// 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+	// 	"success": false,
+	// 	"message":"No user exixts",
+	// 	"error":err,
 		
-		})
-	}
+	// 	})
+	// }
 
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
 		"message":"User created successfully",
-		"User":user,
+		"User":request,
 		
 		})
 
