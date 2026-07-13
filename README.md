@@ -14,8 +14,7 @@ VALID X-API-KEY & Authorization Token
 
 Invalid API KEYS
 ![alt text](/images/MissingAPIKey.png)
-![alt text](/images/InvalidApiKey.png)
-
+![alt text](/images/InvalidAPIKey.png)
 INVALID Authorization TOKEN
 ![alt text](/images/MissingAuthorizationToken.png)
 ![alt text](/images/InvalidAuthorizationToken.png)
