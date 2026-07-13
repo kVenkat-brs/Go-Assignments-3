@@ -7,5 +7,5 @@ type User struct {
 	Name string `bson:"name" json:"name"`
 	Email string `bson:"email" json:"email"`
 	Password string `bson:"password" json:"-"`
-	X_API_key string `bson:"api_key" json:"api_key"`
+	X_API_key string `bson:"api_key,omitempty" json:"api_key,omitempty"`
 }

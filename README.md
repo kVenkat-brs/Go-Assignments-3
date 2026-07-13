@@ -1,24 +1,21 @@
 # Go-Assignments-3
 
 Logger
-![alt text](/images/image-2.png)
+![alt text](/images/Logger.png)
 
 Request timing
-![alt text](/images/image.png)
+![alt text](/images/Request%20Timing.png)
 
 CORS
-![alt text](/images/image-1.png)
+![alt text](/images/CORS.png)
 
-VALID X-API-KEY
-![alt text](/images/image-3.png)
+VALID X-API-KEY & Authorization Token
+![alt text](/images/GetAllStudents.png)
 
 Invalid API KEYS
-![alt text](/images/image-4.png)
-![alt text](/images/image-5.png)
+![alt text](/images/MissingAPIKey.png)
+![alt text](/images/InvalidApiKey.png)
 
-JWT TOKEN
-![alt text](/images/image-6.png)
-
-INVALID JWT TOKEN
-![alt text](/images/image-7.png)
-![alt text](/images/image-8.png)
+INVALID Authorization TOKEN
+![alt text](/images/MissingAuthorizationToken.png)
+![alt text](/images/InvalidAuthorizationToken.png)

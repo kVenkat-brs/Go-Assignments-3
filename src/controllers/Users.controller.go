@@ -10,6 +10,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/golang-jwt/jwt"
 	"github.com/kVenkat-brs/Go-Assignment-2/src/db"
+	utils "github.com/kVenkat-brs/Go-Assignments-3/src/Utils"
 	"github.com/kVenkat-brs/Go-Assignments-3/src/models"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"golang.org/x/crypto/bcrypt"
@@ -34,47 +35,27 @@ func CreateUser(c fiber.Ctx) error {
 
 	if err :=c.Bind().Body(&request);err!=nil{
 
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-		"success": false,
-		"message":"Invalid Body",
-		"error":err,
-		
-		})
+		return utils.Error(c,fiber.StatusBadRequest,"Invalid Body")
 	}
 
 	users :=db.GetCollection("users")
 	var existingUser models.User 
 
 	if err := users.FindOne(c.Context(),bson.M{"email":request.Email}).Decode(&existingUser);err == nil{
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success": false,
-			"message":"User already exists",
-			
-			})
+			 return utils.Error(c,fiber.StatusConflict,"User Already Exists!")
 	}
 
 	hashedPassword,err:= bcrypt.GenerateFromPassword([]byte(request.Password),14)
 	if err!=nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err})
+		return utils.Error(c,fiber.StatusInternalServerError,"Invalid Password!!")
 	}
 
 	request.Password = string(hashedPassword)
 
-	request.X_API_key,err = GenereateAPIKey()
-
-
-	if err!=nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err})
-	}
-
 	result, err := users.InsertOne(c.Context(),request)
 
 	if err!=nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-		"success": false,
-		"message":err,
-		
-		})
+		return utils.Error(c,fiber.StatusInternalServerError,"Unable to create User")
 		
 	}
 
@@ -92,12 +73,9 @@ func CreateUser(c fiber.Ctx) error {
 	// }
 
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"success": true,
-		"message":"User created successfully",
-		"User":request,
-		
-		})
+
+
+	return utils.Success(c,fiber.StatusCreated,"User created successfully",request)
 
 
 
@@ -112,33 +90,32 @@ func Login(c fiber.Ctx) error{
 	var body models.User
 
 	if err := c.Bind().Body(&body);err!=nil{
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success":false,
-			"message": err,
-		})
+		return utils.Error(c,fiber.StatusBadRequest,"Cannot Parse body")
 	}
 
 	users :=db.GetCollection("users")
 	var existingUser models.User 
 
 	if err := users.FindOne(c.Context(),bson.M{"email":body.Email}).Decode(&existingUser);err != nil{
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success": false,
-			"message":"User not found",
-			"err":err,
-			
-			})
+			return utils.Error(c,fiber.StatusNotFound,"User not found")
 	}
 
 
 	if err:= bcrypt.CompareHashAndPassword([]byte(existingUser.Password),[]byte(body.Password));err!=nil{
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success": false,
-			"message":"Invalid Password",
-			"err":err,
-			
-			})
+		return utils.Error(c,fiber.StatusUnauthorized,"Invalid Password, try again with correct one!!")
 	}
+
+	ApiKey, err :=GenereateAPIKey()
+	if err!=nil {
+		return utils.Error(c,fiber.StatusInternalServerError,"Unable to Generate API Key!")
+	}
+
+	filter := bson.M{
+		"_id":existingUser.Id,
+	}
+
+	
+	existingUser.X_API_key =ApiKey
 
 	token:= jwt.NewWithClaims(jwt.SigningMethodHS256,jwt.MapClaims{
 		"userId":existingUser.Id.Hex(),
@@ -150,10 +127,18 @@ func Login(c fiber.Ctx) error{
 	if err!=nil {
 		fmt.Println(err)
 		
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error" : "Colud'nt create token!!"})
+		return utils.Error(c,fiber.StatusInternalServerError,"Unable to Create a Token")
 		
 	}
 
+	result,err := users.UpdateOne(c.Context(),filter,bson.M{"$set":existingUser})
+
+	if err!=nil {
+		return utils.Error(c,fiber.StatusInternalServerError,"Unable to update Api key!!")
+	}
+	if result.MatchedCount == 0 {
+		return utils.Error(c,fiber.StatusNotFound,"User Not Found")
+	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success":true,

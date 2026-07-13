@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/golang-jwt/jwt"
 	"github.com/kVenkat-brs/Go-Assignment-2/src/db"
+	utils "github.com/kVenkat-brs/Go-Assignments-3/src/Utils"
 	"github.com/kVenkat-brs/Go-Assignments-3/src/models"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
@@ -32,10 +33,7 @@ func ApiKeyMiddleware(c fiber.Ctx)error  {
 
 	reqHeaderKey := c.Get("x-api-key")
 	if reqHeaderKey == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success":false,
-			"message":"No Api key found",
-		})
+		return utils.Error(c,fiber.StatusUnauthorized,"No Api Key found")
 	}
 	usersCollection :=db.GetCollection("users")
 	filter  := bson.M{
@@ -43,11 +41,7 @@ func ApiKeyMiddleware(c fiber.Ctx)error  {
 	}
 	var userApiKey models.User
 	if err:= usersCollection.FindOne(c.Context(),filter).Decode(&userApiKey);err!=nil{
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"success":false,
-			"message":"Invalid Api Key",
-			"error":err,
-		})
+		return utils.Error(c,fiber.StatusUnauthorized,"Invalid Api Key")
 	}
 
 	return c.Next()
@@ -59,29 +53,20 @@ func AuthorizationMiddleware(c fiber.Ctx) error {
 	tokenString := c.Get("Authorization")
 
 	if tokenString =="" {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"success":false,
-			"message":"No token found, Login again",
-		})
+		return utils.Error(c,fiber.StatusUnauthorized,"No Token Found, Login Again!!")
+		
 		
 	}
 	token,err:= jwt.Parse(tokenString,func(t *jwt.Token) (interface{}, error) {return jwtsecret,nil})
 
 	if err!=nil || !token.Valid {
 		fmt.Println(err)
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"success":false,
-			"message":"Unauthorized: invalid token!!",
-		})
+		return utils.Error(c,fiber.StatusUnauthorized,"invalid Token!!")
 	}
 	claims := token.Claims.(jwt.MapClaims)
 
 	if float64(time.Now().Unix())>claims["exp"].(float64){
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"success":false,
-			"message":"Token Expired!",
-			
-		})
+		return utils.Error(c,fiber.StatusUnauthorized,"Token Expired!!")
 	}
 
 	return c.Next()
